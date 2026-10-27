@@ -113,6 +113,60 @@ def kmeans(
     return etiquetas, centroides, inercia
 
 
+def _graficar_resultado(
+    X: NDArray,
+    etiquetas: NDArray,
+    centroides: NDArray,
+    archivo: str = "k_means_resultado.png",
+) -> None:
+    """Genera un grafico (PNG) de los puntos coloreados por cluster y los centroides."""
+    import matplotlib
+
+    matplotlib.use("Agg")  # Backend sin ventana: guarda directo a archivo.
+
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(8, 6))
+    colores = plt.cm.viridis(np.linspace(0, 1, centroides.shape[0]))
+
+    for i, color in zip(range(centroides.shape[0]), colores):
+        mascara = etiquetas == i
+        plt.scatter(
+            X[mascara, 0],
+            X[mascara, 1],
+            c=[color],
+            s=40,
+            alpha=0.7,
+            label=f"Cluster {i}",
+        )
+        plt.scatter(
+            *centroides[i],
+            c=[color],
+            marker="X",
+            s=250,
+            edgecolors="black",
+            linewidths=1.5,
+        )
+
+    plt.scatter(
+        centroides[:, 0],
+        centroides[:, 1],
+        c="black",
+        marker="X",
+        s=50,
+        label="Centroides",
+    )
+    plt.title(f"Resultado de k-means (K={centroides.shape[0]})")
+    plt.xlabel("X1")
+    plt.ylabel("X2")
+    plt.legend()
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(archivo, dpi=150)
+    plt.close()
+    print(f"Grafico guardado en: {archivo}")
+
+
 if __name__ == "__main__":
     print("Ejemplo de uso de kmeans:")
     rng = np.random.default_rng(42)
@@ -126,3 +180,16 @@ if __name__ == "__main__":
     print(f"Centroides:\n{centroides}")
     print(f"Inercia: {inercia:.2f}")
     print(f"Distribucion de puntos por cluster: {np.bincount(etiquetas)}")
+
+    respuesta = input(
+        "Deseas generar una representacion grafica del resultado? (s/n): "
+    ).strip().lower()
+    if respuesta in ("s", "y", "si", "yes"):
+        try:
+            _graficar_resultado(X, etiquetas, centroides)
+        except ImportError:
+            print(
+                "No se encontro matplotlib. Instalalo con: pip install matplotlib"
+            )
+    else:
+        print("No se genero el grafico.")
